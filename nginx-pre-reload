@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$PLUGIN_CORE_AVAILABLE_PATH/config/functions"
+source "$PLUGIN_CORE_AVAILABLE_PATH/nginx-vhosts/functions"
+
+APP="$1"
+
+eval "$(config_export app "$APP")"
+
+CONFIG_FOLDER="$DOKKU_ROOT/$APP/nginx.conf.d"
+
+CONFIG_FILE="$CONFIG_FOLDER/timeout.conf"
+
+[[ -d "$CONFIG_FOLDER" ]] || mkdir "$CONFIG_FOLDER"
+
+echo "Writing to $CONFIG_FILE"
+
+if  [ ! -z "$PROXY_TIMEOUT" ]; then
+  echo "-----> Setting proxy timeout to $PROXY_TIMEOUT"
+  echo "proxy_connect_timeout $PROXY_TIMEOUT;" > $CONFIG_FILE
+  echo "proxy_send_timeout $PROXY_TIMEOUT;" >> $CONFIG_FILE
+  echo "proxy_read_timeout $PROXY_TIMEOUT;" >> $CONFIG_FILE
+  echo "send_timeout $PROXY_TIMEOUT;" >> $CONFIG_FILE
+else
+  echo "-----> Setting proxy timeout to 60s"
+  echo "proxy_connect_timeout 60s;" > $CONFIG_FILE
+  echo "proxy_send_timeout 60s;" >> $CONFIG_FILE
+  echo "proxy_read_timeout 60s;" >> $CONFIG_FILE
+  echo "send_timeout 60s;" >> $CONFIG_FILE
+fi
+
+chown dokku:dokku $CONFIG_FILE
+
+restart_nginx

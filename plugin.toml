@@ -1,0 +1,4 @@
+[plugin]
+description = "Dokku plugin for setting proxy timeout in nginx config"
+version = "0.1.0"
+[plugin.config]
